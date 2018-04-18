@@ -5,13 +5,13 @@
 # and makes the values .env compatible: no spaces or quotes
 
 # jump to docker ENV APP_PATH
-if [ -z "$APP_PATH" ]; then
+if [ -z "${APP_PATH}" ]; then
   echo "APP_PATH not set are we running in a docker container?"
   exit 0
 fi
 
 # jump to the APP_PATH
-cd ${APP_PATH}
+cd "${APP_PATH}"
 #echo $(pwd)
 
 # pass the cli arguments to django-admin
@@ -28,14 +28,12 @@ fi
 
 #echo "making changes..."
 
-BASE_DIR=$(dirname "$0")
-SETTINGS_DIR="${APP_PATH}/${2}/${2}"
-#echo ${SETTINGS_DIR}
-ENV_FILE="${SETTINGS_DIR}/.env"
+# one level above settings.py
+ENV_FILE="${APP_PATH}/${2}/.env"
 #echo ${ENV_FILE}
-GITINGORE="${SETTINGS_DIR}/.gitignore"
+GITINGORE="${APP_PATH}/${2}/.gitignore"
 #echo ${GITINGORE}
-SETTINGS_FILE="${SETTINGS_DIR}/settings.py"
+SETTINGS_FILE="${APP_PATH}/${2}/${2}/settings.py"
 #echo ${SETTINGS_FILE}
 
 if [ ! -f "$SETTINGS_FILE" ]; then
@@ -65,20 +63,24 @@ echo >> ${ENV_FILE}
 # relocate the SECRET_KEY
 # translate SECRET_KEY removing spaces and single quotes
 SECRET_KEY=$(grep "SECRET_KEY" "${SETTINGS_FILE}" | tr -d [:space:] | tr -d "'")
-sed -i "s/^SECRET_KEY = .*/SECRET_KEY = os.getenv(\"SECRET_KEY\")/" "${SETTINGS_FILE}"
+sed -i "s/^SECRET_KEY = .*/SECRET_KEY = os.getenv(\"SECRET_KEY\") # change in .env/" "${SETTINGS_FILE}"
 echo -e "${SECRET_KEY}" >> ${ENV_FILE}
 echo -e >> ${ENV_FILE}
 
 # relocate DEBUG
+# since ENVs come in as strings we test strings for True
 DEBUG=$(grep "DEBUG" $SETTINGS_FILE | tr -d [:space:])
-sed -i "s/DEBUG = .*/DEBUG = os.getenv(\"DEBUG\")/" $SETTINGS_FILE
+sed -i "s/DEBUG = .*/DEBUG = os.getenv(\"DEBUG\") in ['True', 'TRUE', 'true', '1', 1] # change in .env/" $SETTINGS_FILE
 echo -e "${DEBUG}" >> ${ENV_FILE}
 echo -e >> ${ENV_FILE}
 
 # ALLOWED_HOSTS
-sed -i "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = map(str.strip, os.getenv(\"ALLOWED_HOSTS\").split(','))/" $SETTINGS_FILE
-echo -e "# comma separated single quote string of ip addesses or hosts, no brackets" >> ${ENV_FILE}
-echo -e "ALLOWED_HOSTS='0.0.0.0'" >> ${ENV_FILE}
+sed -i "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = map(str.strip, os.getenv(\"ALLOWED_HOSTS\").split(',')) # change in .env/" $SETTINGS_FILE
+
+echo -e "# since ALLOWED_HOSTS expects a Python list and this is bash," >> ${ENV_FILE}
+echo -e "# the best we can do is take in a comma separated string and split/map/list in Python" >> ${ENV_FILE}
+echo -e "# so, this needs to be comma separated single quote string of ip addesses or hosts, no brackets" >> ${ENV_FILE}
+echo -e "ALLOWED_HOSTS='192.168.99.100'" >> ${ENV_FILE}
 echo -e >> ${ENV_FILE}
 
 echo "removed configs and secrets from: ${SETTINGS_FILE#${APP_PATH}\/}"
