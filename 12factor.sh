@@ -75,7 +75,7 @@ echo -e "${DEBUG}" >> ${ENV_FILE}
 echo -e >> ${ENV_FILE}
 
 # ALLOWED_HOSTS
-sed -i "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = map(str.strip, os.getenv(\"ALLOWED_HOSTS\").split(',')) # change in .env/" $SETTINGS_FILE
+sed -i "s/ALLOWED_HOSTS = .*/ALLOWED_HOSTS = list(map(str.strip, os.getenv(\"ALLOWED_HOSTS\").split(','))) # change in .env/" $SETTINGS_FILE
 
 echo -e "# since ALLOWED_HOSTS expects a Python list and this is bash," >> ${ENV_FILE}
 echo -e "# the best we can do is take in a comma separated string and split/map/list in Python" >> ${ENV_FILE}
