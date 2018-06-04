@@ -47,9 +47,15 @@ if [ -f "$GITINGORE" ]; then
   if ! grep ".env" "$GITINGORE" ; then
     echo -e ".env" >> "$GITINGORE"
   fi
+  if ! grep ".venv" "$GITINGORE" ; then
+    echo -e ".venv" >> "$GITINGORE"
+  fi
 else
   echo ".env" > "$GITINGORE"
+  echo ".venv" >> "$GITINGORE"
 fi
+echo "added a .gitignore for the .env file: ${GITINGORE#${APP_PATH}\/}"
+echo "added .venv to .gitignore for pipenv local environments"
 
 # if we already have an .env we don't want to mess with anything
 if [ -f "$ENV_FILE" ]; then
@@ -59,6 +65,8 @@ fi
 
 echo "# .gitignore this file" > ${ENV_FILE}
 echo >> ${ENV_FILE}
+echo "created a .env for configs and secrets: ${ENV_FILE#${APP_PATH}\/}"
+
 
 # relocate the SECRET_KEY
 # translate SECRET_KEY removing spaces and single quotes
@@ -84,5 +92,3 @@ echo -e "ALLOWED_HOSTS='192.168.99.100'" >> ${ENV_FILE}
 echo -e >> ${ENV_FILE}
 
 echo "removed configs and secrets from: ${SETTINGS_FILE#${APP_PATH}\/}"
-echo "created a .env for configs and secrets: ${ENV_FILE#${APP_PATH}\/}"
-echo "added a .gitignore for the .env file: ${GITINGORE#${APP_PATH}\/}"
